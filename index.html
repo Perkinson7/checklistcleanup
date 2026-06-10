@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Контрольный лист — Клуб</title>
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Чек-лист">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="/checklistcleanup/icon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a2f42;
+    --accent: #4f8ef7;
+    --accent2: #7b5cf0;
+    --green: #22c55e;
+    --red: #f43f5e;
+    --yellow: #f59e0b;
+    --text: #e8eaf2;
+    --muted: #6b7280;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  .header {
+    max-width: 680px;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .header-left h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .header-left p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-open { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .badge-during { background: rgba(123,92,240,0.15); color: var(--accent2); }
+  .badge-close { background: rgba(34,197,94,0.15); color: var(--green); }
+
+  .progress-bar-wrap {
+    max-width: 680px;
+    margin: 0 auto 28px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .progress-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+  }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .section-group {
+    max-width: 680px;
+    margin: 0 auto 8px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 10px;
+  }
+
+  .section-label span.tag {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .section-label h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-label .divider {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .subsection {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .subsection-title {
+    padding: 11px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: rgba(255,255,255,0.03); }
+  .check-item.checked { background: rgba(34,197,94,0.05); }
+
+  .check-item input[type="checkbox"] { display: none; }
+
+  .custom-check {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: transparent;
+  }
+
+  .check-item.checked .custom-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .checkmark {
+    display: none;
+    width: 11px;
+    height: 9px;
+  }
+
+  .check-item.checked .checkmark { display: block; }
+
+  .check-label {
+    font-size: 14px;
+    color: var(--text);
+    transition: color 0.15s;
+  }
+
+  .check-item.checked .check-label {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(107,114,128,0.5);
+  }
+
+  /* Итог */
+  .summary-block {
+    max-width: 680px;
+    margin: 24px auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .summary-block h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .summary-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .sig-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    .sig-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .sig-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .sig-field label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .sig-field input, .sig-field textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 8px 11px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sig-field input:focus, .sig-field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .sig-field.full { grid-column: 1 / -1; }
+
+  .email-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: flex-end;
+  }
+
+  .email-row .sig-field { flex: 1; }
+
+  /* Кнопки */
+  .btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: none; opacity: 1; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 100;
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  .inline-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Контрольный лист</h1>
+    <p id="current-date"></p>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="progress-text">0 / 0</div>
+</div>
+
+<!-- ====== ОТКРЫТИЕ ====== -->
+<div class="section-group">
+  <div class="section-label">
+    <span class="tag badge badge-open">Открытие смены</span>
+    <div class="divider"></div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Игровой зал</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Чистые игровые места</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Урны пустые / без переполнения</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">VIP-стекло чистое</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Туалет</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Чистота туалета</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Есть туалетная бумага</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Есть мыло</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Есть бумажные полотенца / салфетки</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Есть освежитель воздуха / распылитель</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Улица и вход</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Территория подметена</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Нет мусора у входа</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Стекло входной двери чистое</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Окна входной группы чистые</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Задний двор</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Территория чистая</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Нет мусора</span></label>
+  </div>
+</div>
+
+<!-- ====== ВО ВРЕМЯ СМЕНЫ ====== -->
+<div class="section-group">
+  <div class="section-label">
+    <span class="tag badge badge-during">Во время смены</span>
+    <div class="divider"></div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Игровой зал</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Зал регулярно убирается</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Нет мусора на столах</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Игровые места в порядке</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Стулья в нормальном состоянии</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">После клиентов</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Стол чистый</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Клавиатура продезинфицирована</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Мышь продезинфицирована</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Рабочее место приведено в порядок</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Туалет</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Чистота поддерживается</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Есть расходники</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Нет запаха / загрязнений</span></label>
+  </div>
+</div>
+
+<!-- ====== ЗАКРЫТИЕ ====== -->
+<div class="section-group">
+  <div class="section-label">
+    <span class="tag badge badge-close">Закрытие смены</span>
+    <div class="divider"></div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Игровой зал</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Мусор собран</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Столы протёрты</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Пол вымыт (вт / чт / сб)</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Туалет</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Полная уборка выполнена</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Зеркало чистое</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Пол вымыт</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Расходники пополнены</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Улица и вход</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Территория убрана</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Вход чистый</span></label>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Задний двор</div>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Территория полностью очищена</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Мусора нет</span></label>
+    <label class="check-item"><input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="check-label">Фотоотчёт сделан</span></label>
+  </div>
+</div>
+
+<!-- ====== ИТОГ ====== -->
+<div class="summary-block" style="max-width:680px;margin:24px auto 0;">
+  <h3>📌 Итог и подписи</h3>
+
+  <div class="summary-checks">
+    <label class="check-item" style="border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+      <input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="check-label">Смена принята без нарушений</span>
+    </label>
+    <label class="check-item" style="border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+      <input type="checkbox"><div class="custom-check"><svg class="checkmark" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="check-label">Замечания зафиксированы</span>
+    </label>
+  </div>
+
+  <div class="sig-row">
+    <div class="sig-field">
+      <label>Дата</label>
+      <input type="date" id="sig-date">
+    </div>
+    <div class="sig-field">
+      <label>Ответственный за смену</label>
+      <input type="text" id="sig-resp" placeholder="Имя Фамилия">
+    </div>
+    <div class="sig-field full">
+      <label>Замечания (если есть)</label>
+      <textarea id="sig-notes" rows="5" placeholder="Опишите нарушения или замечания..." style="min-height:100px;"></textarea>
+    </div>
+  </div>
+
+  <input type="hidden" id="report-email" value="cybershoria@gmail.com">
+
+  <button class="btn btn-primary" onclick="sendReport()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+    Отправить отчёт на почту
+  </button>
+  <p class="inline-note">Отчёт будет отправлен на cybershoria@gmail.com — нажмите «Отправить» в почте</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Set date
+  const now = new Date();
+  document.getElementById('current-date').textContent = now.toLocaleDateString('ru-RU', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('sig-date').value = now.toISOString().split('T')[0];
+
+  // Checkbox interactions
+  document.querySelectorAll('.check-item').forEach(item => {
+    const cb = item.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    item.addEventListener('click', () => {
+      cb.checked = !cb.checked;
+      item.classList.toggle('checked', cb.checked);
+      updateProgress();
+    });
+  });
+
+  function updateProgress() {
+    const all = document.querySelectorAll('.check-item input[type="checkbox"]');
+    const checked = document.querySelectorAll('.check-item input[type="checkbox"]:checked');
+    const pct = all.length ? Math.round(checked.length / all.length * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = checked.length + ' / ' + all.length;
+  }
+
+  updateProgress();
+
+  function getChecklistText() {
+    const sections = {
+      'Открытие смены': {
+        'Игровой зал': ['Чистые игровые места','Урны пустые / без переполнения','VIP-стекло чистое'],
+        'Туалет': ['Чистота туалета','Есть туалетная бумага','Есть мыло','Есть бумажные полотенца / салфетки','Есть освежитель воздуха / распылитель'],
+        'Улица и вход': ['Территория подметена','Нет мусора у входа','Стекло входной двери чистое','Окна входной группы чистые'],
+        'Задний двор': ['Территория чистая','Нет мусора']
+      },
+      'Во время смены': {
+        'Игровой зал': ['Зал регулярно убирается','Нет мусора на столах','Игровые места в порядке','Стулья в нормальном состоянии'],
+        'После клиентов': ['Стол чистый','Клавиатура продезинфицирована','Мышь продезинфицирована','Рабочее место приведено в порядок'],
+        'Туалет': ['Чистота поддерживается','Есть расходники','Нет запаха / загрязнений']
+      },
+      'Закрытие смены': {
+        'Игровой зал': ['Мусор собран','Столы протёрты','Пол вымыт (вт / чт / сб)'],
+        'Туалет': ['Полная уборка выполнена','Зеркало чистое','Пол вымыт','Расходники пополнены'],
+        'Улица и вход': ['Территория убрана','Вход чистый'],
+        'Задний двор': ['Территория полностью очищена','Мусора нет','Фотоотчёт сделан']
+      }
+    };
+
+    const allLabels = [];
+    Object.values(sections).forEach(sub => Object.values(sub).forEach(items => allLabels.push(...items)));
+    const allChecks = document.querySelectorAll('.check-item');
+    const stateMap = {};
+    allChecks.forEach(item => {
+      const lbl = item.querySelector('.check-label');
+      const cb = item.querySelector('input[type="checkbox"]');
+      if (lbl && cb) stateMap[lbl.textContent.trim()] = cb.checked;
+    });
+
+    let lines = ['КОНТРОЛЬНЫЙ ЛИСТ КЛУБА', ''];
+    lines.push('Дата: ' + (document.getElementById('sig-date').value || '—'));
+    lines.push('Ответственный: ' + (document.getElementById('sig-resp').value || '—'));
+    lines.push('');
+
+    Object.entries(sections).forEach(([section, subs]) => {
+      lines.push('=== ' + section.toUpperCase() + ' ===');
+      Object.entries(subs).forEach(([sub, items]) => {
+        lines.push('\n' + sub + ':');
+        items.forEach(item => {
+          lines.push((stateMap[item] ? '[✓]' : '[ ]') + ' ' + item);
+        });
+      });
+      lines.push('');
+    });
+
+    // итог
+    const summaryItems = document.querySelectorAll('.summary-block .check-item');
+    lines.push('=== ИТОГ ===');
+    summaryItems.forEach(item => {
+      const lbl = item.querySelector('.check-label');
+      const cb = item.querySelector('input[type="checkbox"]');
+      if (lbl && cb) lines.push((cb.checked ? '[✓]' : '[ ]') + ' ' + lbl.textContent.trim());
+    });
+
+    const notes = document.getElementById('sig-notes').value;
+    if (notes) { lines.push(''); lines.push('Замечания: ' + notes); }
+
+    const all = document.querySelectorAll('.check-item input[type="checkbox"]');
+    const checked = document.querySelectorAll('.check-item input[type="checkbox"]:checked');
+    lines.push('');
+    lines.push('Выполнено: ' + checked.length + ' из ' + all.length + ' пунктов');
+
+    return lines.join('\n');
+  }
+
+  function sendReport() {
+    const email = document.getElementById('report-email').value;
+
+    const date = document.getElementById('sig-date').value || new Date().toLocaleDateString('ru-RU');
+    const resp = document.getElementById('sig-resp').value || 'Сотрудник';
+    const subject = encodeURIComponent('Отчёт по смене — ' + date + ' — ' + resp);
+    const body = encodeURIComponent(getChecklistText());
+
+    window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+    showToast('Открываем почтовый клиент…', 'success');
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + (type || '');
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+</script>
+</body>
+</html>
